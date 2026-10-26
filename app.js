@@ -15,15 +15,13 @@ function showTime() {
 }
 
 // Function to fetch the Bible text file and parse verses
-async function loadBible() {
-    try {
-        const response = await fetch('http://localhost:5500/bibles/kjv.txt');
-        const bibleText = await response.text();
-        const verses = parseBibleText(bibleText);
-        return verses;
-    } catch (error) {
-        console.error('Error loading Bible text:', error);
+async function loadBible(translation) {
+    const response = await fetch(`bibles/${translation}.txt`);
+    if (!response.ok) {
+        throw new Error(`Failed to load ${translation.toUpperCase()} (${response.status})`);
     }
+    const bibleText = await response.text();
+    return parseBibleText(bibleText);
 }
 
 // Function to parse the Bible text into an array of verses
@@ -86,6 +84,10 @@ function getVerseByTime(verses) {
 async function init() {
     let verses;
     let lastMinute;
+    let translationRequest = 0;
+    const translationSelect = document.getElementById('translation');
+    const verseElement = document.getElementById('verse');
+
     const updateClock = () => {
         showTime();
         const { hours, minutes } = getCurrentTime();
@@ -96,10 +98,30 @@ async function init() {
         lastMinute = currentMinute;
     };
 
+    const updateTranslation = async () => {
+        const request = ++translationRequest;
+        const translation = translationSelect.value;
+        try {
+            const loadedVerses = await loadBible(translation);
+            if (request !== translationRequest) {
+                return;
+            }
+            verses = loadedVerses;
+            getVerseByTime(verses);
+        } catch (error) {
+            if (request !== translationRequest) {
+                return;
+            }
+            verses = undefined;
+            console.error('Error loading Bible text:', error);
+            verseElement.textContent = 'Unable to load selected translation.';
+        }
+    };
+
     updateClock();
     setInterval(updateClock, 1000);
-    verses = await loadBible();
-    getVerseByTime(verses);
+    translationSelect.addEventListener('change', updateTranslation);
+    await updateTranslation();
 }
 
 // Run the init function when the window loads

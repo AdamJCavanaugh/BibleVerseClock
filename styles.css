@@ -25,6 +25,12 @@ body {
     color: #4a4a4a;
 }
 
+#translation {
+    margin: 8px 0 20px;
+    padding: 6px;
+    font-size: 1em;
+}
+
 #verse {
     font-size: 1.2em;
     color: #333;
