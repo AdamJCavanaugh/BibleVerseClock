@@ -3,14 +3,15 @@ function getCurrentTime() {
     const now = new Date();
     const hours = now.getHours().toString();
     const minutes = now.getMinutes().toString().padStart(2, '0');
-    return { hours, minutes };
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    return { hours, minutes, seconds };
 }
 
 // Function to display current time
 function showTime() {
     const timeElement = document.getElementById('time');
-    const { hours, minutes } = getCurrentTime();
-    timeElement.textContent = `Current Time: ${hours}:${minutes}`;
+    const { hours, minutes, seconds } = getCurrentTime();
+    timeElement.textContent = `Current Time: ${hours}:${minutes}:${seconds}`;
 }
 
 // Function to fetch the Bible text file and parse verses
@@ -83,11 +84,22 @@ function getVerseByTime(verses) {
 
 // Initialize the app
 async function init() {
-    showTime();
-    setInterval(showTime, 60000); // Update time every minute
-    const verses = await loadBible();
+    let verses;
+    let lastMinute;
+    const updateClock = () => {
+        showTime();
+        const { hours, minutes } = getCurrentTime();
+        const currentMinute = `${hours}:${minutes}`;
+        if (lastMinute !== undefined && currentMinute !== lastMinute && verses) {
+            getVerseByTime(verses);
+        }
+        lastMinute = currentMinute;
+    };
+
+    updateClock();
+    setInterval(updateClock, 1000);
+    verses = await loadBible();
     getVerseByTime(verses);
-    setInterval(() => getVerseByTime(verses), 60000); // Update verse every minute
 }
 
 // Run the init function when the window loads
